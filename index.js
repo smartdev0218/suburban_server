@@ -1,78 +1,37 @@
-// To connect with your mongoDB database
-const mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost:27017/', {
-    dbName: 'whitelist_address',
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}, err => err ? console.log(err) : 
-    console.log('Connected to whitelist_address database'));
-
-// Schema for users of app
-const UserSchema = new mongoose.Schema({
-    address: {
-        type: String,
-        required: true,
-    },
-    date: {
-        type: Date,
-        default: Date.now,
-    },
-});
-const User = mongoose.model('users', UserSchema);
-User.createIndexes();
-
-// For backend and express
 const express = require('express');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const routes = require('./routes/api');
+require('dotenv').config();
+
 const app = express();
-const cors = require("cors");
-console.log("App listen at port 5000");
-app.use(express.json());
 
-const whitelist = ["http://localhost:5000"]
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || whitelist.indexOf(origin) !== -1) {
-      callback(null, true)
-    } else {
-      callback(new Error("Not allowed by CORS"))
-    }
-  },
-  credentials: true,
-}
-app.use(cors(corsOptions))
+const port = 5000;
 
-app.get("/", (req, resp) => {
+// Connect to the database
+mongoose
+  .connect('mongodb://localhost:27017/', { dbName: 'white_list_address', useNewUrlParser: true })
+  .then(() => console.log(`Database connected successfully`))
+  .catch((err) => console.log(err));
 
-    resp.send("App is Working");
-    // You can check backend is working or not by 
-    // entering http://loacalhost:5000
-    
-    // If you see App is working means
-    // backend working properly
+// Since mongoose's Promise is deprecated, we override it with Node's Promise
+mongoose.Promise = global.Promise;
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
 });
 
-app.post("/register", async (req, resp) => {
-    try {
-        const user = new User(req.body);
-        let result = await user.save();
-        result = result.toObject();
-        if (result) {
-            delete result.password;
-            resp.send(req.body);
-            console.log(result);
-        } else {
-            console.log("User already register");
-        }
+app.use(bodyParser.json());
 
-    } catch (e) {
-        resp.send("Something Went Wrong");
-    }
+app.use('/api', routes);
+
+app.use((err, req, res, next) => {
+  console.log(err);
+  next();
 });
 
-app.get("/find", (req, res) => {
-    User.find(function(err, response) {
-        res.json(response);
-    });
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
-
-app.listen(5000);
