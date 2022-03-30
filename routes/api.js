@@ -14,7 +14,7 @@ router.get('/find', (req, res, next) => {
 });
 
 router.post('/register', (req, res, next) => {
-  if (req.body.wladdress) {
+  if (req.body.address) {
     WLAddr.create(req.body)
       .then((data) => res.json(data))
       .catch(next);

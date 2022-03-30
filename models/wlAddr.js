@@ -1,9 +1,8 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// Create schema for todo
 const WhiteList = new Schema({
-  wladdress: {
+  address: {
     type: String,
     required: [true, 'The todo text field is required'],
   },
@@ -13,7 +12,6 @@ const WhiteList = new Schema({
   }
 });
 
-// Create model for todo
 const WLAddr = mongoose.model('wlAddr', WhiteList);
 
 module.exports = WLAddr;
